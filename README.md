@@ -12,7 +12,8 @@ XAI Visualizer is a modern web application designed to transform complex AI expl
   - **Bar Chart**: View feature importance with clear positive and negative contributions.
   - **Tornado Charts**: Bidirectional visualizations showing how features push predictions in opposite directions.
   - **Force Field Analysis**: Visualize driving and restraining forces impacting decisions.
-- **📁 Data Upload**: Easily upload your own CSV datasets or use sample data to get started immediately.
+- **📁 Data Upload**: Easily upload your own JSON datasets or use sample data to get started immediately.
+
 - **🤖 AI Assistant**: Chat with an integrated AI assistant (powered by Google Generative AI) to get plain-language explanations of your data and model behavior.
 - **✨ Modern UI**: Built with a premium, responsive design using Tailwind CSS and Radix UI components.
 
@@ -66,10 +67,35 @@ XAI Visualizer is a modern web application designed to transform complex AI expl
 
 ## Usage
 
-1. **Upload Data**: Click "Get Started" and upload a CSV file containing your dataset and model predictions.
+1. **Upload Data**: Click "Get Started" and upload a JSON file containing your dataset and model predictions.
+
 2. **Select Visualization**: Choose between Bar Chart, Tornado Chart, or Force Field Analysis to visualize the impact of different features.
 3. **Analyze**: Hover over chart elements for detailed values.
 4. **Ask AI**: Use the chat interface to ask specific questions about the data or request an explanation of a specific prediction.
+
+## Data Format
+
+The application requires a JSON file with a specific structure. Here is an example:
+
+```json
+{
+  "columns": ["Feature", "Contribution", "Impact"],
+  "data": [
+    ["alcohol", 1.5712558031, "Positive"],
+    ["sulphates", 0.9624174833, "Positive"],
+    ["total sulfur dioxide", 0.6518693566, "Negative"],
+    ["volatile acidity", 0.5169388652, "Negative"],
+    ["chlorides", 0.5033429861, "Positive"],
+    ["pH", 0.371339947, "Negative"],
+    ["density", 0.3486789465, "Negative"],
+    ["fixed acidity", 0.337703079, "Negative"],
+    ["free sulfur dioxide", 0.3049920797, "Negative"],
+    ["citric acid", 0.2762276828, "Positive"],
+    ["residual sugar", 0.2197407633, "Positive"]
+  ]
+}
+```
+
 
 ## Project Structure
 
