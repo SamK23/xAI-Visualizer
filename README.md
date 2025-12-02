@@ -4,7 +4,7 @@
 
 XAI Visualizer is a modern web application designed to transform complex AI explanations into intuitive, interactive visualizations. It helps users understand their model's decisions through various chart types and an AI-powered assistant.
 
-![XAI Visualizer Preview](/public/logo.png)
+![XAI Visualizer Preview](/public/ovgu-logo-white.png)
 
 ## Features
 
