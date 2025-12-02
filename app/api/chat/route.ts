@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     console.log("[Chat API] Current Visualization:", currentVisualization);
     console.log("[Chat API] Dataset Data (metadata only):", datasetData?.metadata);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const datasetType = datasetData?.metadata?.type || "unknown";
     const datasetName = datasetData?.metadata?.name || "User Dataset";

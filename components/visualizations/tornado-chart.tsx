@@ -96,13 +96,13 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
             {chartData.map((item, index) => (
               <div key={index} className="flex items-center">
                 <span className="text-sm font-medium text-gray-300 w-40 text-right pr-4">{item.name}</span>
-                <div className="flex-1 flex items-center relative h-8 bg-gray-100">
+                <div className="flex-1 flex items-center relative h-8 bg-gray-200 rounded-full overflow-hidden">
                   {/* Center line */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300 z-10"></div>
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 z-10"></div>
                   {/* Negative bar (left side) */}
                   {item.negative > 0 && (
                     <div
-                      className="absolute right-1/2 top-0 bottom-0 bg-red-500 flex items-center justify-start pl-3 transition-all duration-1000 ease-out"
+                      className="absolute right-1/2 top-0 bottom-0 bg-gradient-to-l from-red-500 to-red-600 flex items-center justify-start pl-3 transition-all duration-1000 ease-out"
                       style={{
                         width: `${(item.negative / effectiveMaxValue) * 50}%`,
                       }}
@@ -113,7 +113,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
                   {/* Positive bar (right side) */}
                   {item.positive > 0 && (
                     <div
-                      className="absolute left-1/2 top-0 bottom-0 bg-blue-500 flex items-center justify-end pr-3 transition-all duration-1000 ease-out"
+                      className="absolute left-1/2 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-end pr-3 transition-all duration-1000 ease-out"
                       style={{
                         width: `${(item.positive / effectiveMaxValue) * 50}%`,
                       }}
@@ -128,7 +128,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
 
           {/* X-axis for custom datasets */}
           {!isSampleDataset && (
-            <div className="relative w-full h-8 mt-6">
+            <div className="relative w-full h-8 mt-6 pl-44">
               <svg className="w-full h-full overflow-visible">
                 {/* Axis line */}
                 <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
@@ -152,7 +152,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
                   )
                 })}
               </svg>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300">SHAP Value</div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
             </div>
           )}
 

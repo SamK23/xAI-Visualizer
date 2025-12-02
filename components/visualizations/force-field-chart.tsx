@@ -49,6 +49,8 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
       }))
       .sort((a: any, b: any) => b.strength - a.strength) // Sort by strength/importance for display
 
+    const hasData = allProcessedFeatures.length > 0
+
     // Fallback data for Force Field Analysis if no valid features are processed
     const fallbackForces = {
       centralIdea: "Upgrade our IT systems",
@@ -69,19 +71,22 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
 
     return {
       centralIdea: data.metadata?.target || "Model Prediction",
-      drivingForces: drivingForces.length > 0 ? drivingForces : fallbackForces.drivingForces,
-      restrainingForces: restrainingForces.length > 0 ? restrainingForces : fallbackForces.restrainingForces,
+      drivingForces: hasData ? drivingForces : fallbackForces.drivingForces,
+      restrainingForces: hasData ? restrainingForces : fallbackForces.restrainingForces,
     }
   }, [data, isSampleDataset])
 
   // Use overall max absolute impact for scaling for custom datasets, or chartData's max for samples
+  // Ensure we consider the current chart data's max strength to prevent overflow
+  const currentMaxStrength = Math.max(
+    ...chartData.drivingForces.map((f) => f.strength),
+    ...chartData.restrainingForces.map((f) => f.strength),
+    0.01
+  )
+
   const maxOverallStrengthForScaling = isSampleDataset
-    ? Math.max(
-      ...chartData.drivingForces.map((f) => f.strength),
-      ...chartData.restrainingForces.map((f) => f.strength),
-      1,
-    )
-    : overallMaxAbsImpact
+    ? currentMaxStrength
+    : Math.max(overallMaxAbsImpact, currentMaxStrength)
 
   const maxBarPixelWidth = 300 // Increased maximum pixel width for the longest bar for custom data
   const baseBarWidth = 120 // Base width for a strength of 1 (for sample data)
@@ -98,14 +103,16 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
   }
 
   const ArrowBar = ({ name, strength, impact, type, maxOverallStrength, isSample }: ArrowBarProps) => {
-    let width: number
+    let totalWidth: number
     if (isSample) {
-      width = baseBarWidth + (strength - 1) * strengthMultiplier
+      totalWidth = baseBarWidth + (strength - 1) * strengthMultiplier
     } else {
       // For custom, scale width based on actual importance relative to overall max importance
-      width = (strength / Math.max(maxOverallStrength, 0.01)) * maxBarPixelWidth
-      width = Math.max(width, 10) // Ensure a minimum visible width for very small values
+      totalWidth = (strength / Math.max(maxOverallStrength, 0.01)) * maxBarPixelWidth
+      totalWidth = Math.max(totalWidth, arrowHeadWidth + 10) // Ensure a minimum visible width
     }
+
+    const rectangleWidth = totalWidth - arrowHeadWidth
 
     const colorClass =
       type === "driving" ? "bg-gradient-to-r from-blue-500 to-blue-600" : "bg-gradient-to-l from-red-500 to-red-600"
@@ -115,17 +122,17 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
 
     return (
       <div
-        className={`relative h-12 flex items-center rounded-md max-w-full flex-shrink-0`}
-        style={{ width: `${width + arrowHeadWidth}px` }}
+        className={`relative h-8 flex items-center rounded-full max-w-full flex-shrink-0`}
+        style={{ width: `${totalWidth}px` }}
       >
         {/* Rectangular body */}
         <div
-          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-0" : "right-0"}`}
-          style={{ width: `${width}px` }}
+          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-0 rounded-l-full" : "right-0 rounded-r-full"}`}
+          style={{ width: `${rectangleWidth}px` }}
         ></div>
         {/* Arrow head */}
         <div
-          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-[calc(100%-15px)]" : "right-[calc(100%-15px)]"} `}
+          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "right-0" : "left-0"} `}
           style={{
             width: `${arrowHeadWidth}px`,
             clipPath: type === "driving" ? "polygon(0% 0%, 100% 50%, 0% 100%)" : "polygon(100% 0%, 0% 50%, 100% 100%)",
@@ -136,7 +143,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
         <div
           className={`absolute inset-0 flex items-center ${type === "driving" ? "justify-end pr-4" : "justify-start pl-4"} z-10`}
         >
-          <span className={`text-sm font-semibold ${textColor} whitespace-nowrap`}>
+          <span className={`text-xs font-bold ${textColor} whitespace-nowrap drop-shadow-md`}>
             {name} {formattedImpact}
           </span>
         </div>
@@ -184,29 +191,32 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
           </p>
         </CardHeader>
         <CardContent>
-          <div
-            className={`flex flex-col lg:flex-row justify-center items-stretch py-8 relative space-x-4 lg:space-x-8`}
-          >
-            {/* Vertical grid lines */}
-            <div className="absolute inset-0 top-10 flex justify-around px-16 z-0">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-px bg-white/5 h-full"></div>
-              ))}
-            </div>
-
+          <div className="flex flex-col lg:flex-row justify-center items-stretch py-8 relative space-x-4 lg:space-x-8">
             {/* Forces for change (Left) */}
-            <div className="flex flex-col items-end pr-4 lg:pr-8 space-y-4 z-10 flex-1 min-w-[200px]">
-              <div className="flex justify-around w-full text-xs font-semibold text-gray-300 mb-2">
-                {xAxisTicks
-                  .slice()
-                  .reverse()
-                  .map((num, i) => (
-                    <span key={i} className="flex-1 text-center">
+            <div className="relative flex flex-col items-end pr-4 lg:pr-8 space-y-4 z-10 flex-1 min-w-[200px]">
+              {/* Grid lines for Left Column */}
+              <div className="absolute top-10 bottom-0 right-4 lg:right-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-px bg-white/5 h-full"></div>
+                ))}
+              </div>
+
+              <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
+                {xAxisTicks.map((num, i) => {
+                  // Calculate position: 0 (right) to 100% (left) for reversed axis
+                  const position = (i / (xAxisTicks.length - 1)) * 100
+                  return (
+                    <span
+                      key={i}
+                      className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
+                      style={{ right: `${position}%` }}
+                    >
                       {isSampleDataset ? num : num.toFixed(2)}
                     </span>
-                  ))}
+                  )
+                })}
               </div>
-              <h3 className="text-lg font-bold text-gray-100 mb-4">Forces for change</h3>
+              <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces for change</h3>
               {chartData.drivingForces.map((force, index) => (
                 <ArrowBar
                   key={index}
@@ -218,8 +228,8 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
                   isSample={isSampleDataset}
                 />
               ))}
-              <div className="mt-4 text-base font-bold text-blue-400">
-                Total: {isSampleDataset ? totalDriving : totalDriving.toFixed(2)}
+              <div className="mt-4 text-base font-bold text-blue-400 z-10">
+                Total: +{isSampleDataset ? totalDriving : totalDriving.toFixed(2)}
               </div>
             </div>
 
@@ -231,15 +241,30 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
             </div>
 
             {/* Forces against change (Right) */}
-            <div className="flex flex-col items-start pl-4 lg:pl-8 space-y-4 z-10 flex-1 min-w-[200px]">
-              <div className="flex justify-around w-full text-xs font-semibold text-gray-300 mb-2">
-                {xAxisTicks.map((num, i) => (
-                  <span key={i} className="flex-1 text-center">
-                    {isSampleDataset ? num : num.toFixed(2)}
-                  </span>
+            <div className="relative flex flex-col items-start pl-4 lg:pl-8 space-y-4 z-10 flex-1 min-w-[200px]">
+              {/* Grid lines for Right Column */}
+              <div className="absolute top-10 bottom-0 left-4 lg:left-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-px bg-white/5 h-full"></div>
                 ))}
               </div>
-              <h3 className="text-lg font-bold text-gray-100 mb-4">Forces against change</h3>
+
+              <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
+                {xAxisTicks.map((num, i) => {
+                  // Calculate position: 0 (left) to 100% (right)
+                  const position = (i / (xAxisTicks.length - 1)) * 100
+                  return (
+                    <span
+                      key={i}
+                      className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
+                      style={{ left: `${position}%` }}
+                    >
+                      {isSampleDataset ? num : num.toFixed(2)}
+                    </span>
+                  )
+                })}
+              </div>
+              <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces against change</h3>
               {chartData.restrainingForces.map((force, index) => (
                 <ArrowBar
                   key={index}
@@ -251,8 +276,8 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
                   isSample={isSampleDataset}
                 />
               ))}
-              <div className="mt-4 text-base font-bold text-red-400">
-                Total: {isSampleDataset ? totalRestraining : totalRestraining.toFixed(2)}
+              <div className="mt-4 text-base font-bold text-red-400 z-10">
+                Total: -{isSampleDataset ? totalRestraining : totalRestraining.toFixed(2)}
               </div>
             </div>
           </div>
@@ -276,6 +301,6 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   )
 }

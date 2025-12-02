@@ -132,7 +132,7 @@ export function FeatureImportanceChart({
 
           {/* X-axis for custom datasets */}
           {!isSampleDataset && (
-            <div className="relative w-full h-8 mt-6">
+            <div className="relative w-full h-8 mt-6 pl-44">
               <svg className="w-full h-full overflow-visible">
                 {/* Axis line */}
                 <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
@@ -156,7 +156,7 @@ export function FeatureImportanceChart({
                   )
                 })}
               </svg>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300">SHAP Value</div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
             </div>
           )}
 

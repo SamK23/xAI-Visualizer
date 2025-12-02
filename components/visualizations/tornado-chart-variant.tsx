@@ -99,9 +99,9 @@ export function TornadoChartVariant({ data }: TornadoChartVariantProps) {
                 </span>
 
                 {/* Bar Container */}
-                <div className="flex-1 bg-gray-200 rounded-sm">
+                <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
                   <div
-                    className={`h-6 rounded-sm transition-all duration-1000 ease-out ${item.isPositive ? "bg-blue-600" : "bg-red-500"} flex items-center justify-end pr-2`}
+                    className={`h-full rounded-full transition-all duration-1000 ease-out ${item.isPositive ? "bg-gradient-to-r from-blue-500 to-blue-600" : "bg-gradient-to-r from-red-500 to-red-600"} flex items-center justify-end pr-3`}
                     style={{ width: `${(item.importance / effectiveMaxValue) * 100}%` }}
                   >
                     <span className="text-white text-xs font-medium">{item.formattedValue}</span>
@@ -131,7 +131,7 @@ export function TornadoChartVariant({ data }: TornadoChartVariantProps) {
               </svg>
             </div>
             {/* Axis Label */}
-            <p className="text-center text-xs sm:text-sm text-gray-300 mt-3">Impact Value</p>
+            <p className="text-center text-xs sm:text-sm text-gray-300 mt-3">SHAP Value</p>
           </div>
 
           {/* Legend */}
