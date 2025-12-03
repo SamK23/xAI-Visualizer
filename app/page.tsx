@@ -120,7 +120,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">2. Explore Visualizations</h3>
             <p className="text-gray-600">
-              Choose from 3 different chart types: Feature Importance, Tornado, and Force Field plots
+              Choose from 3 different chart types: Bar Chart, Tornado Charts, and Force Field plot
             </p>
           </div>
 
@@ -129,7 +129,7 @@ export default function HomePage() {
               <Database className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">3. Ask Questions</h3>
-            <p className="text-gray-600">Chat with our AI assistant to get explanations in plain language</p>
+            <p className="text-gray-600">Chat with our AI assistant to get explanations in natural language</p>
           </div>
         </div>
       </section>

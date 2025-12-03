@@ -36,7 +36,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
     const drivingForces = selectedDrivingForces
       .map((f: any) => ({
         name: f.name,
-        strength: isSampleDataset ? Math.min(5, Math.max(1, Math.round(f.importance * 10))) : f.importance, // Use 1-5 for sample, raw importance for custom
+        strength: f.importance, // Use raw importance for both sample and custom
         impact: f.value, // Original value
       }))
       .sort((a: any, b: any) => b.strength - a.strength) // Sort by strength/importance for display
@@ -44,7 +44,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
     const restrainingForces = selectedRestrainingForces
       .map((f: any) => ({
         name: f.name,
-        strength: isSampleDataset ? Math.min(5, Math.max(1, Math.round(f.importance * 10))) : f.importance, // Use 1-5 for sample, raw importance for custom
+        strength: f.importance, // Use raw importance for both sample and custom
         impact: f.value, // Original value
       }))
       .sort((a: any, b: any) => b.strength - a.strength) // Sort by strength/importance for display
@@ -104,15 +104,10 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
 
   const ArrowBar = ({ name, strength, impact, type, maxOverallStrength, isSample }: ArrowBarProps) => {
     let totalWidth: number
-    if (isSample) {
-      totalWidth = baseBarWidth + (strength - 1) * strengthMultiplier
-    } else {
-      // For custom, scale width based on actual importance relative to overall max importance
-      totalWidth = (strength / Math.max(maxOverallStrength, 0.01)) * maxBarPixelWidth
-      totalWidth = Math.max(totalWidth, arrowHeadWidth + 10) // Ensure a minimum visible width
-    }
+    // Always scale width based on actual importance relative to overall max importance
+    totalWidth = (strength / Math.max(maxOverallStrength, 0.01)) * maxBarPixelWidth
+    totalWidth = Math.max(totalWidth, arrowHeadWidth + 10) // Ensure a minimum visible width
 
-    const rectangleWidth = totalWidth - arrowHeadWidth
 
     const colorClass =
       type === "driving" ? "bg-gradient-to-r from-blue-500 to-blue-600" : "bg-gradient-to-l from-red-500 to-red-600"
@@ -127,15 +122,12 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
       >
         {/* Rectangular body */}
         <div
-          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-0 rounded-l-full" : "right-0 rounded-r-full"}`}
-          style={{ width: `${rectangleWidth}px` }}
-        ></div>
-        {/* Arrow head */}
-        <div
-          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "right-0" : "left-0"} `}
+          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-0" : "right-0"}`}
           style={{
-            width: `${arrowHeadWidth}px`,
-            clipPath: type === "driving" ? "polygon(0% 0%, 100% 50%, 0% 100%)" : "polygon(100% 0%, 0% 50%, 100% 100%)",
+            width: `${totalWidth}px`,
+            clipPath: type === "driving"
+              ? "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%)"
+              : "polygon(15px 0%, 100% 0%, 100% 100%, 15px 100%, 0% 50%)"
           }}
         ></div>
 
@@ -166,11 +158,9 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
 
   const numTicks = 5 // Number of ticks for the X-axis
   const xAxisTicks = useMemo(() => {
-    if (isSampleDataset) {
-      return [1, 2, 3, 4, 5] // Fixed 1-5 scale for sample
-    }
-    return generateTicks(maxOverallStrengthForScaling, numTicks) // Dynamic scale for custom
-  }, [maxOverallStrengthForScaling, isSampleDataset])
+    // Always use dynamic ticks based on the max strength/impact
+    return generateTicks(maxOverallStrengthForScaling, numTicks)
+  }, [maxOverallStrengthForScaling])
 
   return (
     <div className="space-y-6">
@@ -211,7 +201,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
                       className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
                       style={{ right: `${position}%` }}
                     >
-                      {isSampleDataset ? num : num.toFixed(2)}
+                      {num.toFixed(2)}
                     </span>
                   )
                 })}
@@ -259,7 +249,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
                       className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
                       style={{ left: `${position}%` }}
                     >
-                      {isSampleDataset ? num : num.toFixed(2)}
+                      {num.toFixed(2)}
                     </span>
                   )
                 })}

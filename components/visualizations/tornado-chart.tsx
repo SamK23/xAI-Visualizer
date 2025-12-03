@@ -126,35 +126,33 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
             ))}
           </div>
 
-          {/* X-axis for custom datasets */}
-          {!isSampleDataset && (
-            <div className="relative w-full h-8 mt-6 pl-44">
-              <svg className="w-full h-full overflow-visible">
-                {/* Axis line */}
-                <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
-                {/* Ticks and labels */}
-                {xAxisTicks.map((tick, i) => {
-                  const xPos = ((tick + maxAbsImpactForScaling) / (2 * maxAbsImpactForScaling)) * 100
-                  return (
-                    <g key={i}>
-                      <line x1={`${xPos}%`} y1="50%" x2={`${xPos}%`} y2="70%" stroke="#cbd5e1" strokeWidth="1" />
-                      <text
-                        x={`${xPos}%`}
-                        y="95%"
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="#cbd5e1"
-                        className="font-medium"
-                      >
-                        {tick.toFixed(2)}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
-            </div>
-          )}
+          {/* X-axis for all datasets */}
+          <div className="relative w-full h-8 mt-6 pl-44">
+            <svg className="w-full h-full overflow-visible">
+              {/* Axis line */}
+              <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
+              {/* Ticks and labels */}
+              {xAxisTicks.map((tick, i) => {
+                const xPos = ((tick + maxAbsImpactForScaling) / (2 * maxAbsImpactForScaling)) * 100
+                return (
+                  <g key={i}>
+                    <line x1={`${xPos}%`} y1="50%" x2={`${xPos}%`} y2="70%" stroke="#cbd5e1" strokeWidth="1" />
+                    <text
+                      x={`${xPos}%`}
+                      y="95%"
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#cbd5e1"
+                      className="font-medium"
+                    >
+                      {tick.toFixed(2)}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
+          </div>
 
           <div className="flex justify-center items-center mt-6 space-x-8 text-sm">
             <div className="flex items-center space-x-2">

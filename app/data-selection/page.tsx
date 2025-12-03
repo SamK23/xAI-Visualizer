@@ -227,7 +227,7 @@ export default function DataSelectionPage() {
                     <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xs font-bold">
                       2
                     </div>
-                    <p className="text-gray-600">Generate interactive visualizations</p>
+                    <p className="text-gray-600">Generate intuitive visualizations</p>
                   </div>
                   <div>
                     <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xs font-bold">

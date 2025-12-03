@@ -31,11 +31,16 @@ export async function POST(request: NextRequest) {
     let aiInstructions = "";
     if (datasetType === "sample") {
       aiInstructions = `
-This is a well-known open-source dataset. You can leverage your foundational knowledge about ${datasetName} (e.g., Bike Sharing, Diabetes, Wine Quality) to provide richer context and insights. Explain concepts related to this specific domain where appropriate.
+This is a standard dataset (e.g., ${datasetName}). 
+1. Provide a brief metadata/description of the dataset based on its known attributes (e.g., if it's the Titanic dataset, explain it predicts survival based on age, class, etc.).
+2. Leverage your foundational knowledge about this domain to provide rich context and insights.
 `;
     } else {
       aiInstructions = `
-This is a custom dataset with limited metadata. Your responses must strictly adhere to the provided 'Dataset Features' and 'Target Variable' information. Do not introduce external knowledge or make assumptions beyond the given data. Focus on interpreting the provided feature attributions.
+This is a custom dataset. 
+1. Analyze the provided attributes/features (${datasetFeatures}) to propose a likely description or domain for this dataset. For example, if attributes match a known dataset (like Diabetes or Iris), suggest that it might be related to that domain.
+2. If the domain is unclear, describe the dataset based on the visible attributes.
+3. Your responses must strictly adhere to the provided 'Dataset Features' and 'Target Variable' information. Do not make definitive claims about the dataset's origin unless the attributes strongly suggest it.
 `;
     }
 
@@ -72,12 +77,11 @@ RESPONSE STYLE:
 - Format responses like ChatGPT/Claude with proper structure
 
 Previous conversation context:
-${
-  conversationHistory
-    ?.slice(-5)
-    .map((msg: any) => `${msg.role}: ${msg.content}`)
-    .join("\n") || ""
-}
+${conversationHistory
+        ?.slice(-5)
+        .map((msg: any) => `${msg.role}: ${msg.content}`)
+        .join("\n") || ""
+      }
 
 User question: ${message}
 
