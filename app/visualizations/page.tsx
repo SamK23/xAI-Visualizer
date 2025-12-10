@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, MessageCircle } from "lucide-react"
-import { FeatureImportanceChart } from "@/components/visualizations/feature-importance-chart"
+import { BarChart } from "@/components/visualizations/bar-chart"
 import { TornadoChart } from "@/components/visualizations/tornado-chart"
 import { ForceFieldChart } from "@/components/visualizations/force-field-chart"
 import { TornadoChartVariant } from "@/components/visualizations/tornado-chart-variant" // Added import
@@ -13,7 +13,7 @@ import { AIAssistant, clearChatHistory } from "@/components/ai-assistant"
 import { toast } from "@/hooks/use-toast"
 
 const visualizationTabs = [
-  { id: "feature-importance", label: "Bar Chart", component: FeatureImportanceChart },
+  { id: "feature-importance", label: "Bar Chart", component: BarChart },
   { id: "tornado", label: "Tornado Chart (Variant 1)", component: TornadoChart },
   { id: "tornado-variant", label: "Tornado Chart (Variant 2)", component: TornadoChartVariant },
   { id: "force-field", label: "Force Field Plot", component: ForceFieldChart },

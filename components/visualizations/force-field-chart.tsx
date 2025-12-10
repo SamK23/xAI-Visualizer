@@ -1,8 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { processChartFeatures } from "@/lib/chart-utils" // Import the new utility
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface ForceFieldChartProps {
   data: any
@@ -162,117 +165,165 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
     return generateTicks(maxOverallStrengthForScaling, numTicks)
   }, [maxOverallStrengthForScaling])
 
+  const chartRef = useRef<HTMLDivElement>(null)
+
+  const handleExport = async () => {
+    if (!chartRef.current) return
+
+    try {
+      const html2canvas = (await import("html2canvas")).default
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: "#1e293b", // Match the dark background
+      })
+      const imageData = canvas.toDataURL("image/png")
+      const filename = `force-field-chart-${Date.now()}.png`
+
+      const response = await fetch("/api/save-chart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageData, filename }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Chart Exported",
+          description: `Saved to ${data.path}`,
+        })
+      } else {
+        throw new Error("Failed to save chart")
+      }
+    } catch (error) {
+      console.error("Export failed:", error)
+      toast({
+        title: "Export Failed",
+        description: "Could not save the chart image.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Force Field Plot</h2>
-        <p className="text-gray-600">
-          This chart visualizes the driving forces (positive contributions) and restraining forces (negative
-          contributions) impacting a central decision or outcome. It helps understand the factors pushing for and
-          against a particular prediction or change.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Force Field Plot</h2>
+          <p className="text-gray-600">
+            This chart visualizes the driving forces (positive contributions) and restraining forces (negative
+            contributions) impacting a central decision or outcome. It helps understand the factors pushing for and
+            against a particular prediction or change.
+          </p>
+        </div>
+        <Button onClick={handleExport} variant="outline" size="sm" className="ml-4">
+          <Download className="w-4 h-4 mr-2" />
+          Export PNG
+        </Button>
       </div>
 
-      <Card className="backdrop-blur-md bg-slate-800 border-white/20">
-        <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Forces Influencing: {chartData.centralIdea}</CardTitle>
-          <p className="text-sm text-gray-300">
-            Driving forces push towards the outcome, restraining forces pull away.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row justify-center items-stretch py-8 relative space-x-4 lg:space-x-8">
-            {/* Forces for change (Left) */}
-            <div className="relative flex flex-col items-end pr-4 lg:pr-8 space-y-4 z-10 flex-1 min-w-[200px]">
-              {/* Grid lines for Left Column */}
-              <div className="absolute top-10 bottom-0 right-4 lg:right-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-px bg-white/5 h-full"></div>
+      <div ref={chartRef} className="p-4 rounded-xl bg-slate-800">
+        <Card className="bg-transparent border-0 shadow-none">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-100">Forces Influencing: {chartData.centralIdea}</CardTitle>
+            <p className="text-sm text-gray-300">
+              Driving forces push towards the outcome, restraining forces pull away.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row justify-center items-stretch py-8 relative space-x-4 lg:space-x-8">
+              {/* Forces for change (Left) */}
+              <div className="relative flex flex-col items-end pr-4 lg:pr-8 space-y-4 z-10 flex-1 min-w-[200px]">
+                {/* Grid lines for Left Column */}
+                <div className="absolute top-10 bottom-0 right-4 lg:right-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-px bg-white/5 h-full"></div>
+                  ))}
+                </div>
+
+                <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
+                  {xAxisTicks.map((num, i) => {
+                    // Calculate position: 0 (right) to 100% (left) for reversed axis
+                    const position = (i / (xAxisTicks.length - 1)) * 100
+                    return (
+                      <span
+                        key={i}
+                        className={`absolute text-xs font-semibold text-gray-300 transform ${i === xAxisTicks.length - 1 ? "translate-x-full" : "-translate-x-1/2"}`}
+                        style={{ right: `${position}%` }}
+                      >
+                        {num.toFixed(2)}
+                      </span>
+                    )
+                  })}
+                </div>
+                <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces for change</h3>
+                {chartData.drivingForces.map((force, index) => (
+                  <ArrowBar
+                    key={index}
+                    name={force.name}
+                    strength={force.strength}
+                    impact={force.impact}
+                    type="driving"
+                    maxOverallStrength={maxOverallStrengthForScaling}
+                    isSample={isSampleDataset}
+                  />
                 ))}
+                <div className="mt-4 text-base font-bold text-blue-400 z-10">
+                  Total: +{isSampleDataset ? totalDriving : totalDriving.toFixed(2)}
+                </div>
               </div>
 
-              <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
-                {xAxisTicks.map((num, i) => {
-                  // Calculate position: 0 (right) to 100% (left) for reversed axis
-                  const position = (i / (xAxisTicks.length - 1)) * 100
-                  return (
-                    <span
-                      key={i}
-                      className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
-                      style={{ right: `${position}%` }}
-                    >
-                      {num.toFixed(2)}
-                    </span>
-                  )
-                })}
+              {/* Central Idea */}
+              <div className="flex flex-col items-center justify-center mx-4 lg:mx-8 z-20 flex-shrink-0">
+                <div className="bg-white/80 border border-gray-300 rounded-xl p-6 text-center shadow-lg min-w-[120px] max-w-[180px] h-[300px] flex items-center justify-center text-wrap overflow-hidden">
+                  <h3 className="text-xl font-bold text-gray-900">{chartData.centralIdea}</h3>
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces for change</h3>
-              {chartData.drivingForces.map((force, index) => (
-                <ArrowBar
-                  key={index}
-                  name={force.name}
-                  strength={force.strength}
-                  impact={force.impact}
-                  type="driving"
-                  maxOverallStrength={maxOverallStrengthForScaling}
-                  isSample={isSampleDataset}
-                />
-              ))}
-              <div className="mt-4 text-base font-bold text-blue-400 z-10">
-                Total: +{isSampleDataset ? totalDriving : totalDriving.toFixed(2)}
-              </div>
-            </div>
 
-            {/* Central Idea */}
-            <div className="flex flex-col items-center justify-center mx-4 lg:mx-8 z-20 flex-shrink-0">
-              <div className="bg-white/80 border border-gray-300 rounded-xl p-6 text-center shadow-lg min-w-[120px] max-w-[180px] h-[300px] flex items-center justify-center text-wrap overflow-hidden">
-                <h3 className="text-xl font-bold text-gray-900">{chartData.centralIdea}</h3>
-              </div>
-            </div>
+              {/* Forces against change (Right) */}
+              <div className="relative flex flex-col items-start pl-4 lg:pl-8 space-y-4 z-10 flex-1 min-w-[200px]">
+                {/* Grid lines for Right Column */}
+                <div className="absolute top-10 bottom-0 left-4 lg:left-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-px bg-white/5 h-full"></div>
+                  ))}
+                </div>
 
-            {/* Forces against change (Right) */}
-            <div className="relative flex flex-col items-start pl-4 lg:pl-8 space-y-4 z-10 flex-1 min-w-[200px]">
-              {/* Grid lines for Right Column */}
-              <div className="absolute top-10 bottom-0 left-4 lg:left-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-px bg-white/5 h-full"></div>
+                <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
+                  {xAxisTicks.map((num, i) => {
+                    // Calculate position: 0 (left) to 100% (right)
+                    const position = (i / (xAxisTicks.length - 1)) * 100
+                    return (
+                      <span
+                        key={i}
+                        className={`absolute text-xs font-semibold text-gray-300 transform ${i === xAxisTicks.length - 1 ? "-translate-x-full" : "-translate-x-1/2"}`}
+                        style={{ left: `${position}%` }}
+                      >
+                        {num.toFixed(2)}
+                      </span>
+                    )
+                  })}
+                </div>
+                <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces against change</h3>
+                {chartData.restrainingForces.map((force, index) => (
+                  <ArrowBar
+                    key={index}
+                    name={force.name}
+                    strength={force.strength}
+                    impact={force.impact}
+                    type="restraining"
+                    maxOverallStrength={maxOverallStrengthForScaling}
+                    isSample={isSampleDataset}
+                  />
                 ))}
-              </div>
-
-              <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
-                {xAxisTicks.map((num, i) => {
-                  // Calculate position: 0 (left) to 100% (right)
-                  const position = (i / (xAxisTicks.length - 1)) * 100
-                  return (
-                    <span
-                      key={i}
-                      className="absolute text-xs font-semibold text-gray-300 transform -translate-x-1/2"
-                      style={{ left: `${position}%` }}
-                    >
-                      {num.toFixed(2)}
-                    </span>
-                  )
-                })}
-              </div>
-              <h3 className="text-lg font-bold text-gray-100 mb-4 z-10">Forces against change</h3>
-              {chartData.restrainingForces.map((force, index) => (
-                <ArrowBar
-                  key={index}
-                  name={force.name}
-                  strength={force.strength}
-                  impact={force.impact}
-                  type="restraining"
-                  maxOverallStrength={maxOverallStrengthForScaling}
-                  isSample={isSampleDataset}
-                />
-              ))}
-              <div className="mt-4 text-base font-bold text-red-400 z-10">
-                Total: -{isSampleDataset ? totalRestraining : totalRestraining.toFixed(2)}
+                <div className="mt-4 text-base font-bold text-red-400 z-10">
+                  Total: -{isSampleDataset ? totalRestraining : totalRestraining.toFixed(2)}
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="backdrop-blur-md bg-blue-50/60 border-blue-200/50">
         <CardContent className="p-4">

@@ -1,8 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { processChartFeatures } from "@/lib/chart-utils" // Assuming this utility exists
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface TornadoChartVariantProps {
   data: any
@@ -74,79 +77,127 @@ export function TornadoChartVariant({ data }: TornadoChartVariantProps) {
   const numTicks = 5
   const xAxisTicks = useMemo(() => generateTicks(effectiveMaxValue, numTicks), [effectiveMaxValue])
 
+  const chartRef = useRef<HTMLDivElement>(null)
+
+  const handleExport = async () => {
+    if (!chartRef.current) return
+
+    try {
+      const html2canvas = (await import("html2canvas")).default
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: "#1e293b", // Match the dark background
+      })
+      const imageData = canvas.toDataURL("image/png")
+      const filename = `tornado-chart-variant-${Date.now()}.png`
+
+      const response = await fetch("/api/save-chart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageData, filename }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Chart Exported",
+          description: `Saved to ${data.path}`,
+        })
+      } else {
+        throw new Error("Failed to save chart")
+      }
+    } catch (error) {
+      console.error("Export failed:", error)
+      toast({
+        title: "Export Failed",
+        description: "Could not save the chart image.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tornado Chart (Variant 2)</h2>
-        <p className="text-gray-600">
-          This chart displays the top positive and negative features influencing the model&apos;s prediction, sorted by their absolute impact.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Tornado Chart (Variant 2)</h2>
+          <p className="text-gray-600">
+            This chart displays the top positive and negative features influencing the model&apos;s prediction, sorted by their absolute impact.
+          </p>
+        </div>
+        <Button onClick={handleExport} variant="outline" size="sm" className="ml-4">
+          <Download className="w-4 h-4 mr-2" />
+          Export PNG
+        </Button>
       </div>
 
-      <Card className="backdrop-blur-md bg-slate-800 border-white/20">
-        <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Feature Impact Comparison</CardTitle>
-          <p className="text-sm text-gray-300">Positive contributions (blue) increase the likelihood, negative contributions (red) decrease it.</p>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          {/* Chart Body */}
-          <div className="space-y-2.5">
-            {chartData.map((item, index) => (
-              <div key={index} className="flex items-center space-x-4">
-                {/* Feature Label */}
-                <span className="text-sm font-medium text-gray-300 w-40 sm:w-48 text-right truncate" title={item.name}>
-                  {item.name}
-                </span>
+      <div ref={chartRef} className="p-4 rounded-xl bg-slate-800">
+        <Card className="bg-transparent border-0 shadow-none">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-100">Feature Impact Comparison</CardTitle>
+            <p className="text-sm text-gray-300">Positive contributions (blue) increase the likelihood, negative contributions (red) decrease it.</p>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            {/* Chart Body */}
+            <div className="space-y-2.5">
+              {chartData.map((item, index) => (
+                <div key={index} className="flex items-center space-x-4">
+                  {/* Feature Label */}
+                  <span className="text-sm font-medium text-gray-300 w-40 sm:w-48 text-right truncate" title={item.name}>
+                    {item.name}
+                  </span>
 
-                {/* Bar Container */}
-                <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-1000 ease-out ${item.isPositive ? "bg-gradient-to-r from-blue-500 to-blue-600" : "bg-gradient-to-r from-red-500 to-red-600"} flex items-center justify-end pr-3`}
-                    style={{ width: `${(item.importance / effectiveMaxValue) * 100}%` }}
-                  >
-                    <span className="text-white text-xs font-medium">{item.formattedValue}</span>
+                  {/* Bar Container */}
+                  <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${item.isPositive ? "bg-gradient-to-r from-blue-500 to-blue-600" : "bg-gradient-to-r from-red-500 to-red-600"} flex items-center justify-end pr-3`}
+                      style={{ width: `${(item.importance / effectiveMaxValue) * 100}%` }}
+                    >
+                      <span className="text-white text-xs font-medium">{item.formattedValue}</span>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* X-Axis Area */}
+            <div className="pl-44 sm:pl-52">
+              {/* SVG for Axis line and Ticks */}
+              <div className="relative w-full h-8 mt-2">
+                <svg className="w-full h-full overflow-visible">
+                  <line x1="0%" y1="0" x2="100%" y2="0" stroke="#cbd5e1" strokeWidth="1" />
+                  {xAxisTicks.map((tick, i) => {
+                    const xPos = (tick / effectiveMaxValue) * 100
+                    return (
+                      <g key={i}>
+                        <line x1={`${xPos}%`} y1="0" x2={`${xPos}%`} y2="5" stroke="#cbd5e1" strokeWidth="1" />
+                        <text x={`${xPos}%`} y="20" textAnchor={i === 0 ? "start" : i === xAxisTicks.length - 1 ? "end" : "middle"} fontSize="12" fill="#cbd5e1" className="font-medium">
+                          {tick.toFixed(2)}
+                        </text>
+                      </g>
+                    )
+                  })}
+                </svg>
               </div>
-            ))}
-          </div>
+              {/* Axis Label */}
+              <p className="text-center text-xs sm:text-sm text-gray-300 mt-3">SHAP Value</p>
+            </div>
 
-          {/* X-Axis Area */}
-          <div className="pl-44 sm:pl-52">
-            {/* SVG for Axis line and Ticks */}
-            <div className="relative w-full h-8 mt-2">
-              <svg className="w-full h-full overflow-visible">
-                <line x1="0%" y1="0" x2="100%" y2="0" stroke="#cbd5e1" strokeWidth="1" />
-                {xAxisTicks.map((tick, i) => {
-                  const xPos = (tick / effectiveMaxValue) * 100
-                  return (
-                    <g key={i}>
-                      <line x1={`${xPos}%`} y1="0" x2={`${xPos}%`} y2="5" stroke="#cbd5e1" strokeWidth="1" />
-                      <text x={`${xPos}%`} y="20" textAnchor="middle" fontSize="12" fill="#cbd5e1" className="font-medium">
-                        {tick.toFixed(2)}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
+            {/* Legend */}
+            <div className="flex justify-center items-center mt-6 space-x-8 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-blue-600 rounded"></div>
+                <span className="text-gray-300">Positive Impact</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span className="text-gray-300">Negative Impact</span>
+              </div>
             </div>
-            {/* Axis Label */}
-            <p className="text-center text-xs sm:text-sm text-gray-300 mt-3">SHAP Value</p>
-          </div>
-
-          {/* Legend */}
-          <div className="flex justify-center items-center mt-6 space-x-8 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-600 rounded"></div>
-              <span className="text-gray-300">Positive Impact</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-gray-300">Negative Impact</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="backdrop-blur-md bg-green-50/60 border-green-200/50">
         <CardContent className="p-4">

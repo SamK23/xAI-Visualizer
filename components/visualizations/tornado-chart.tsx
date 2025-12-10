@@ -1,8 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { processChartFeatures } from "@/lib/chart-utils" // Import the new utility
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface TornadoChartProps {
   data: any
@@ -74,98 +77,146 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
   const numTicks = 5 // Number of ticks for the X-axis
   const xAxisTicks = useMemo(() => generateTicks(maxAbsImpactForScaling, numTicks), [maxAbsImpactForScaling])
 
+  const chartRef = useRef<HTMLDivElement>(null)
+
+  const handleExport = async () => {
+    if (!chartRef.current) return
+
+    try {
+      const html2canvas = (await import("html2canvas")).default
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: "#1e293b", // Match the dark background
+      })
+      const imageData = canvas.toDataURL("image/png")
+      const filename = `tornado-chart-${Date.now()}.png`
+
+      const response = await fetch("/api/save-chart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageData, filename }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Chart Exported",
+          description: `Saved to ${data.path}`,
+        })
+      } else {
+        throw new Error("Failed to save chart")
+      }
+    } catch (error) {
+      console.error("Export failed:", error)
+      toast({
+        title: "Export Failed",
+        description: "Could not save the chart image.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tornado Chart (Variant 1)</h2>
-        <p className="text-gray-600">
-          This tornado chart uses bars extending from a central line to show positive (right) and negative (left)
-          feature contributions. The "push/pull" metaphor makes the impact direction intuitive to understand.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Tornado Chart (Variant 1)</h2>
+          <p className="text-gray-600">
+            This tornado chart uses bars extending from a central line to show positive (right) and negative (left)
+            feature contributions. The "push/pull" metaphor makes the impact direction intuitive to understand.
+          </p>
+        </div>
+        <Button onClick={handleExport} variant="outline" size="sm" className="ml-4">
+          <Download className="w-4 h-4 mr-2" />
+          Export PNG
+        </Button>
       </div>
 
-      <Card className="backdrop-blur-md bg-slate-800 border-white/20">
-        <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Feature Impact Comparison</CardTitle>
-          <p className="text-sm text-gray-300">
-            Features are sorted by their overall importance. Bar length shows impact strength.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {chartData.map((item, index) => (
-              <div key={index} className="flex items-center">
-                <span className="text-sm font-medium text-gray-300 w-40 text-right pr-4">{item.name}</span>
-                <div className="flex-1 flex items-center relative h-8 bg-gray-200 rounded-full overflow-hidden">
-                  {/* Center line */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 z-10"></div>
-                  {/* Negative bar (left side) */}
-                  {item.negative > 0 && (
-                    <div
-                      className="absolute right-1/2 top-0 bottom-0 bg-gradient-to-l from-red-500 to-red-600 flex items-center justify-start pl-3 transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${(item.negative / effectiveMaxValue) * 50}%`,
-                      }}
-                    >
-                      <span className="text-white text-xs font-medium">{"-" + Math.abs(item.impact).toFixed(2)}</span>
-                    </div>
-                  )}
-                  {/* Positive bar (right side) */}
-                  {item.positive > 0 && (
-                    <div
-                      className="absolute left-1/2 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-end pr-3 transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${(item.positive / effectiveMaxValue) * 50}%`,
-                      }}
-                    >
-                      <span className="text-white text-xs font-medium">{"+" + Math.abs(item.impact).toFixed(2)}</span>
-                    </div>
-                  )}
+      <div ref={chartRef} className="p-4 rounded-xl bg-slate-800">
+        <Card className="bg-transparent border-0 shadow-none">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-100">Feature Impact Comparison</CardTitle>
+            <p className="text-sm text-gray-300">
+              Features are sorted by their overall importance. Bar length shows impact strength.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {chartData.map((item, index) => (
+                <div key={index} className="flex items-center">
+                  <span className="text-sm font-medium text-gray-300 w-40 text-right pr-4">{item.name}</span>
+                  <div className="flex-1 flex items-center relative h-8 bg-gray-200 rounded-full overflow-hidden">
+                    {/* Center line */}
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 z-10"></div>
+                    {/* Negative bar (left side) */}
+                    {item.negative > 0 && (
+                      <div
+                        className="absolute right-1/2 top-0 bottom-0 bg-gradient-to-l from-red-500 to-red-600 flex items-center justify-start pl-3 transition-all duration-1000 ease-out rounded-l-full"
+                        style={{
+                          width: `${(item.negative / effectiveMaxValue) * 50}%`,
+                        }}
+                      >
+                        <span className="text-white text-xs font-medium">{"-" + Math.abs(item.impact).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {/* Positive bar (right side) */}
+                    {item.positive > 0 && (
+                      <div
+                        className="absolute left-1/2 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-end pr-3 transition-all duration-1000 ease-out rounded-r-full"
+                        style={{
+                          width: `${(item.positive / effectiveMaxValue) * 50}%`,
+                        }}
+                      >
+                        <span className="text-white text-xs font-medium">{"+" + Math.abs(item.impact).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* X-axis for all datasets */}
+            <div className="relative w-full h-8 mt-6 pl-44">
+              <svg className="w-full h-full overflow-visible">
+                {/* Axis line */}
+                <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
+                {/* Ticks and labels */}
+                {xAxisTicks.map((tick, i) => {
+                  const xPos = ((tick + maxAbsImpactForScaling) / (2 * maxAbsImpactForScaling)) * 100
+                  return (
+                    <g key={i}>
+                      <line x1={`${xPos}%`} y1="50%" x2={`${xPos}%`} y2="70%" stroke="#cbd5e1" strokeWidth="1" />
+                      <text
+                        x={`${xPos}%`}
+                        y="95%"
+                        textAnchor={i === 0 ? "start" : i === xAxisTicks.length - 1 ? "end" : "middle"}
+                        fontSize="10"
+                        fill="#cbd5e1"
+                        className="font-medium"
+                      >
+                        {tick.toFixed(2)}
+                      </text>
+                    </g>
+                  )
+                })}
+              </svg>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
+            </div>
+
+            <div className="flex justify-center items-center mt-6 space-x-8 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                <span className="text-gray-300">Positive Impact</span>
               </div>
-            ))}
-          </div>
-
-          {/* X-axis for all datasets */}
-          <div className="relative w-full h-8 mt-6 pl-44">
-            <svg className="w-full h-full overflow-visible">
-              {/* Axis line */}
-              <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
-              {/* Ticks and labels */}
-              {xAxisTicks.map((tick, i) => {
-                const xPos = ((tick + maxAbsImpactForScaling) / (2 * maxAbsImpactForScaling)) * 100
-                return (
-                  <g key={i}>
-                    <line x1={`${xPos}%`} y1="50%" x2={`${xPos}%`} y2="70%" stroke="#cbd5e1" strokeWidth="1" />
-                    <text
-                      x={`${xPos}%`}
-                      y="95%"
-                      textAnchor="middle"
-                      fontSize="10"
-                      fill="#cbd5e1"
-                      className="font-medium"
-                    >
-                      {tick.toFixed(2)}
-                    </text>
-                  </g>
-                )
-              })}
-            </svg>
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
-          </div>
-
-          <div className="flex justify-center items-center mt-6 space-x-8 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span className="text-gray-300">Positive Impact</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span className="text-gray-300">Negative Impact</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-gray-300">Negative Impact</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="backdrop-blur-md bg-blue-50/60 border-blue-200/50">
         <CardContent className="p-4">
@@ -176,7 +227,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
             <div>
               <h4 className="font-semibold text-blue-800 mb-1">Understanding Tornado Chart (Variant 1)</h4>
               <p className="text-blue-700 text-sm">
-                This tornado chart excels at showing directional impact through intuitive bar metaphors. The opposing
+                This tornado chart excels at shows directional impact through intuitive bar metaphors. The opposing
                 directions make it immediately clear which features push toward or away from the prediction, with high
                 engagement and accuracy for interpretation.
               </p>
