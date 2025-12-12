@@ -145,7 +145,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
             <div className="space-y-4">
               {chartData.map((item, index) => (
                 <div key={index} className="flex items-center">
-                  <span className="text-sm font-medium text-gray-300 w-40 text-right pr-4">{item.name}</span>
+                  <span className="text-sm font-medium text-gray-300 w-52 text-right pr-4">{item.name}</span>
                   <div className="flex-1 flex items-center relative h-8 bg-gray-200 rounded-full overflow-hidden">
                     {/* Center line */}
                     <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 z-10"></div>
@@ -177,7 +177,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
             </div>
 
             {/* X-axis for all datasets */}
-            <div className="relative w-full h-8 mt-6 pl-44">
+            <div className="relative w-full h-8 mt-6 pl-56">
               <svg className="w-full h-full overflow-visible">
                 {/* Axis line */}
                 <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
@@ -201,7 +201,7 @@ export function TornadoChart({ data, overallMaxAbsImpact }: TornadoChartProps) {
                   )
                 })}
               </svg>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-56">SHAP Value</div>
             </div>
 
             <div className="flex justify-center items-center mt-6 space-x-8 text-sm">

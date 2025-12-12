@@ -159,7 +159,7 @@ export function BarChart({
                             {chartData.map((item, index) => (
                                 <div key={index} className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-300 w-40 text-right pr-4">{item.name}</span>
+                                        <span className="text-sm font-medium text-gray-300 w-52 text-right pr-4">{item.name}</span>
                                         <div className="flex-1 flex items-center">
                                             <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
                                                 <div
@@ -181,7 +181,7 @@ export function BarChart({
                         </div>
 
                         {/* X-axis for all datasets */}
-                        <div className="relative w-full h-8 mt-6 pl-44">
+                        <div className="relative w-full h-8 mt-6 pl-56">
                             <svg className="w-full h-full overflow-visible">
                                 {/* Axis line */}
                                 <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="1" />
@@ -205,7 +205,7 @@ export function BarChart({
                                     )
                                 })}
                             </svg>
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-44">SHAP Value</div>
+                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 pl-56">SHAP Value</div>
                         </div>
 
                         <div className="flex justify-center items-center mt-6 space-x-8 text-sm">

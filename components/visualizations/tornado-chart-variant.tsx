@@ -144,7 +144,7 @@ export function TornadoChartVariant({ data }: TornadoChartVariantProps) {
               {chartData.map((item, index) => (
                 <div key={index} className="flex items-center space-x-4">
                   {/* Feature Label */}
-                  <span className="text-sm font-medium text-gray-300 w-40 sm:w-48 text-right truncate" title={item.name}>
+                  <span className="text-sm font-medium text-gray-300 w-52 sm:w-60 text-right" title={item.name}>
                     {item.name}
                   </span>
 
@@ -162,7 +162,7 @@ export function TornadoChartVariant({ data }: TornadoChartVariantProps) {
             </div>
 
             {/* X-Axis Area */}
-            <div className="pl-44 sm:pl-52">
+            <div className="pl-56 sm:pl-64">
               {/* SVG for Axis line and Ticks */}
               <div className="relative w-full h-8 mt-2">
                 <svg className="w-full h-full overflow-visible">

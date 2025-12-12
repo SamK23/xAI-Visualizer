@@ -125,12 +125,12 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
       >
         {/* Rectangular body */}
         <div
-          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "left-0" : "right-0"}`}
+          className={`absolute top-0 bottom-0 ${colorClass} ${type === "driving" ? "right-0" : "left-0"}`}
           style={{
             width: `${totalWidth}px`,
             clipPath: type === "driving"
-              ? "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%)"
-              : "polygon(15px 0%, 100% 0%, 100% 100%, 15px 100%, 0% 50%)"
+              ? "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%)" // Driving (Points Right)
+              : "polygon(15px 0%, 100% 0%, 100% 100%, 15px 100%, 0% 50%)" // Restraining (Points Left)
           }}
         ></div>
 
@@ -232,7 +232,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
           </CardHeader>
           <CardContent>
             <div className="flex flex-col lg:flex-row justify-center items-stretch py-8 relative space-x-4 lg:space-x-8">
-              {/* Forces for change (Left) */}
+              {/* Forces for change (Positive/Blue) - LEFT */}
               <div className="relative flex flex-col items-end pr-4 lg:pr-8 space-y-4 z-10 flex-1 min-w-[200px]">
                 {/* Grid lines for Left Column */}
                 <div className="absolute top-10 bottom-0 right-4 lg:right-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
@@ -243,12 +243,12 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
 
                 <div className="relative w-full max-w-[300px] h-6 mb-2 z-10">
                   {xAxisTicks.map((num, i) => {
-                    // Calculate position: 0 (right) to 100% (left) for reversed axis
+                    // Calculate position: 0 (right) to 100% (left)
                     const position = (i / (xAxisTicks.length - 1)) * 100
                     return (
                       <span
                         key={i}
-                        className={`absolute text-xs font-semibold text-gray-300 transform ${i === xAxisTicks.length - 1 ? "translate-x-full" : "-translate-x-1/2"}`}
+                        className={`absolute text-xs font-semibold text-gray-300 transform ${i === xAxisTicks.length - 1 ? "translate-x-full" : "translate-x-1/2"}`}
                         style={{ right: `${position}%` }}
                       >
                         {num.toFixed(2)}
@@ -280,7 +280,7 @@ export function ForceFieldChart({ data, isAssistantOpen = false, overallMaxAbsIm
                 </div>
               </div>
 
-              {/* Forces against change (Right) */}
+              {/* Forces against change (Negative/Red) - RIGHT */}
               <div className="relative flex flex-col items-start pl-4 lg:pl-8 space-y-4 z-10 flex-1 min-w-[200px]">
                 {/* Grid lines for Right Column */}
                 <div className="absolute top-10 bottom-0 left-4 lg:left-8 w-full max-w-[300px] flex justify-between pointer-events-none z-0">
